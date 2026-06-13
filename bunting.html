@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KretivPrint">
+<title>KretivPrint — Bunting Calculator</title>
+<style>
+  :root {
+    --red: #C0392B;
+    --red-dark: #922B21;
+    --red-light: #FADBD8;
+    --bg: #F8F8F8;
+    --card: #FFFFFF;
+    --text: #1A1A1A;
+    --muted: #6B6B6B;
+    --border: #E0E0E0;
+    --success: #1D8348;
+    --success-bg: #EAFAF1;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 2rem;
+  }
+
+  header {
+    background: var(--red);
+    padding: 1rem 1.25rem 1.25rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+
+  header p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    margin-top: 2px;
+  }
+
+  .container { padding: 1rem 1rem 0; }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem 1.125rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 0.875rem;
+  }
+
+  .field { margin-bottom: 0.875rem; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  select, input[type=number] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    color: var(--text);
+    background: #fff;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+  }
+
+  select:focus, input:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px var(--red-light);
+  }
+
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  .tier-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+
+  .tier-btn {
+    padding: 10px 4px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.3;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tier-btn.active {
+    border-color: var(--red);
+    background: var(--red-light);
+  }
+
+  .tier-btn .tn {
+    font-size: 13px;
+    font-weight: 600;
+    display: block;
+    color: var(--text);
+  }
+
+  .tier-btn.active .tn { color: var(--red-dark); }
+
+  .tier-btn .ts {
+    font-size: 10px;
+    color: var(--muted);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .tier-btn.active .ts { color: var(--red); }
+
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.5rem 0;
+  }
+
+  .result-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 0.875rem;
+  }
+
+  .result-header {
+    background: var(--red);
+    padding: 0.75rem 1.125rem;
+  }
+
+  .result-header h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .result-body { padding: 0.875rem 1.125rem; }
+
+  .rrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+
+  .rrow .rlabel { color: var(--muted); flex-shrink: 0; }
+  .rrow .rval { font-weight: 500; text-align: right; max-width: 60%; }
+
+  .rrow.sub { padding-left: 10px; }
+  .rrow.sub .rlabel { font-size: 12px; }
+  .rrow.sub .rval { font-size: 12px; color: var(--muted); }
+
+  .sect-divider {
+    border: none;
+    border-top: 1px dashed var(--border);
+    margin: 8px 0;
+  }
+
+  .sect-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 8px 0 4px;
+  }
+
+  .grand-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 1.125rem;
+    background: var(--success-bg);
+    border-top: 1px solid var(--border);
+  }
+
+  .grand-row .glabel {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--success);
+  }
+
+  .grand-row .gval {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--success);
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 20px;
+    background: var(--red-light);
+    color: var(--red-dark);
+    margin-left: 4px;
+    font-weight: 600;
+  }
+
+  .warn-box {
+    background: #FEF9E7;
+    border: 1px solid #F9CA24;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #7D6608;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .reset-btn {
+    width: 100%;
+    padding: 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    margin-bottom: 0.875rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .version {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 0.5rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>KretivPrint</h1>
+  <p>Bunting Price Calculator · Staff Only</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">Tier Cetakan</div>
+    <div class="tier-grid">
+      <button class="tier-btn" data-tier="standard" onclick="setTier('standard')">
+        <span class="tn">Standard</span>
+        <span class="ts">720dpi · 280gsm</span>
+      </button>
+      <button class="tier-btn active" data-tier="premium" onclick="setTier('premium')">
+        <span class="tn">Premium</span>
+        <span class="ts">1200dpi · 380gsm</span>
+      </button>
+      <button class="tier-btn" data-tier="ultra" onclick="setTier('ultra')">
+        <span class="tn">Ultra</span>
+        <span class="ts">Epson · 440gsm</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Saiz & Spesifikasi</div>
+
+    <div class="row2 field">
+      <div class="field" style="margin-bottom:0">
+        <label>Lebar</label>
+        <div class="select-wrap">
+          <select id="width" onchange="updateHeight()">
+            <option value="12">12"</option>
+            <option value="18">18"</option>
+            <option value="24" selected>24"</option>
+            <option value="30">30"</option>
+            <option value="36">36"</option>
+            <option value="48">48"</option>
+            <option value="60">60"</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Tinggi</label>
+        <div class="select-wrap">
+          <select id="height" onchange="calc()"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Finishing</label>
+      <div class="select-wrap">
+        <select id="finishing" onchange="calc()">
+          <option value="0">Wood only</option>
+          <option value="0.30">Wood with nail</option>
+          <option value="0.30">Wood and wire (20# thin)</option>
+          <option value="0.50">Wood and wire with nails (20# thin)</option>
+          <option value="0.40">Wood and wire (18# thick)</option>
+          <option value="0.70">Wood and double wire (20# thin)</option>
+          <option value="0.90">Wood and double wire (18# thick)</option>
+          <option value="0.60">Wood and wire through wood (20# thin)</option>
+          <option value="0.80">Wood and wire through wood (18# thick)</option>
+          <option value="0.80">PVC pipe</option>
+          <option value="0">Eyelet only (top & bottom)</option>
+          <option value="0">3 inch white space (top & bottom)</option>
+          <option value="0">Welded 3 inch pocket (top & bottom)</option>
+          <option value="0.20">Welded 4 inch pocket (top & bottom)</option>
+          <option value="0.30">Welded 5 inch pocket (top & bottom)</option>
+          <option value="0.50">Welded 6 inch pocket (top & bottom)</option>
+          <option value="1.50">Wood special 1</option>
+          <option value="1.50">Wood special 2</option>
+          <option value="2.00">PVC pipe special 1</option>
+          <option value="2.00">PVC pipe special 2</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:0">
+      <label>Kuantiti (pcs)</label>
+      <input type="number" id="qty" value="1" min="1" step="1" oninput="calc()" />
+    </div>
+  </div>
+
+  <div class="result-card">
+    <div class="result-header">
+      <h2>Ringkasan Harga</h2>
+    </div>
+    <div class="result-body">
+
+      <div class="sect-label">Butiran Order</div>
+      <div class="rrow"><span class="rlabel">Saiz</span><span class="rval" id="r-size">—</span></div>
+      <div class="rrow"><span class="rlabel">Sqft</span><span class="rval" id="r-sqft">—</span></div>
+      <div class="rrow"><span class="rlabel">Tier</span><span class="rval" id="r-tier">—</span></div>
+      <div class="rrow"><span class="rlabel">Finishing</span><span class="rval" id="r-fin-name">—</span></div>
+      <div class="rrow"><span class="rlabel">Kuantiti</span><span class="rval" id="r-qty">—</span></div>
+
+      <div class="sect-divider"></div>
+      <div class="sect-label">Kos SY Printing (KretivPrint bayar)</div>
+      <div class="rrow"><span class="rlabel">Harga seunit SY</span><span class="rval" id="r-sy-unit">—</span></div>
+      <div class="rrow sub"><span class="rlabel">+ SST 10%</span><span class="rval" id="r-sy-sst">—</span></div>
+      <div class="rrow"><span class="rlabel">Kos seunit (inc. SST)</span><span class="rval" id="r-sy-inc">—</span></div>
+      <div class="rrow"><span class="rlabel">Kos total (inc. SST)</span><span class="rval" id="r-sy-total">—</span></div>
+
+      <div class="sect-divider"></div>
+      <div class="sect-label">Harga KretivPrint (charge customer)</div>
+      <div class="rrow">
+        <span class="rlabel">Harga seunit <span class="badge">×3</span></span>
+        <span class="rval" id="r-kp-unit">—</span>
+      </div>
+      <div class="rrow sub"><span class="rlabel">+ SST 10%</span><span class="rval" id="r-kp-sst">—</span></div>
+      <div class="rrow"><span class="rlabel">Harga seunit (inc. SST)</span><span class="rval" id="r-kp-inc">—</span></div>
+
+      <div id="r-warn" class="warn-box">⚠ Minimum charge dikenakan — saiz terlalu kecil.</div>
+    </div>
+
+    <div class="grand-row">
+      <span class="glabel">Total KretivPrint (inc. SST)</span>
+      <span class="gval" id="r-kp-total">—</span>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetForm()">Reset</button>
+
+  <div class="version">KretivPrint Bunting Calculator v1.0 · Staff Only</div>
+
+</div>
+
+<script>
+const RATES = { standard: 0.43, premium: 0.705, ultra: 1.86 };
+const MIN_SY = 5;
+const MARKUP = 3;
+const SST = 0.10;
+const TIER_NAMES = { standard: 'Standard', premium: 'Premium', ultra: 'Ultra' };
+const HEIGHTS = {
+  12: [12,18,24,30,36],
+  18: [12,18,24,30,36,42,48],
+  24: [12,18,24,30,36,42,48,60,72,78,84,96],
+  30: [12,24,30,36,42,48,60,72,78,84,96],
+  36: [12,18,24,30,36,48,60,72,78,84,96,108,120],
+  48: [12,18,24,30,36,48,60,72,84,96,108,120],
+  60: [24,36,48,60,72,84,96,108,120]
+};
+
+let currentTier = 'premium';
+
+function setTier(t) {
+  currentTier = t;
+  document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-tier="' + t + '"]').classList.add('active');
+  calc();
+}
+
+function updateHeight() {
+  const w = parseInt(document.getElementById('width').value);
+  const hSel = document.getElementById('height');
+  const prev = parseInt(hSel.value);
+  hSel.innerHTML = '';
+  (HEIGHTS[w] || []).forEach(h => {
+    const o = document.createElement('option');
+    o.value = h;
+    o.textContent = h + '"';
+    if (h === prev) o.selected = true;
+    hSel.appendChild(o);
+  });
+  calc();
+}
+
+function rm(n) { return 'RM ' + n.toFixed(2); }
+
+function calc() {
+  const w = parseInt(document.getElementById('width').value) || 0;
+  const h = parseInt(document.getElementById('height').value) || 0;
+  const finSel = document.getElementById('finishing');
+  const finAdd = parseFloat(finSel.value) || 0;
+  const finName = finSel.options[finSel.selectedIndex].text;
+  const qty = parseInt(document.getElementById('qty').value) || 1;
+  const rate = RATES[currentTier];
+
+  const sqft = (w * h) / 144;
+  const syBase = Math.max(sqft * rate, MIN_SY / MARKUP);
+  const syUnit = syBase + finAdd;
+  const sySst = syUnit * SST;
+  const syInc = syUnit + sySst;
+  const syTotal = syInc * qty;
+
+  const kpUnit = syInc * MARKUP;
+  const kpSst = kpUnit * SST;
+  const kpInc = kpUnit + kpSst;
+  const kpTotal = kpInc * qty;
+
+  const minHit = (sqft * rate) < (MIN_SY / MARKUP);
+
+  document.getElementById('r-size').textContent = w + '" × ' + h + '"';
+  document.getElementById('r-sqft').textContent = sqft.toFixed(2) + ' sqft';
+  document.getElementById('r-tier').textContent = TIER_NAMES[currentTier];
+  document.getElementById('r-fin-name').textContent = finName;
+  document.getElementById('r-qty').textContent = qty + ' pcs';
+  document.getElementById('r-sy-unit').textContent = rm(syUnit);
+  document.getElementById('r-sy-sst').textContent = rm(sySst);
+  document.getElementById('r-sy-inc').textContent = rm(syInc);
+  document.getElementById('r-sy-total').textContent = rm(syTotal);
+  document.getElementById('r-kp-unit').textContent = rm(kpUnit);
+  document.getElementById('r-kp-sst').textContent = rm(kpSst);
+  document.getElementById('r-kp-inc').textContent = rm(kpInc);
+  document.getElementById('r-kp-total').textContent = rm(kpTotal);
+  document.getElementById('r-warn').style.display = minHit ? 'block' : 'none';
+}
+
+function resetForm() {
+  document.getElementById('width').value = '24';
+  document.getElementById('qty').value = '1';
+  document.getElementById('finishing').selectedIndex = 0;
+  setTier('premium');
+  updateHeight();
+}
+
+updateHeight();
+</script>
+
+</body>
+</html>
